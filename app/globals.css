@@ -64,7 +64,9 @@ main { max-width: 1800px; margin: auto; padding: 24px 40px 48px; }
 .track.big > div { border-radius: 9px; }
 .code-map { display: block; width: 100%; height: auto; margin-bottom: 12px; }
 .code-map rect { shape-rendering: crispEdges; }
-.code-map a:hover rect { opacity: .7; }
+.code-map:has(a:hover) a:not(:hover) { opacity: .4; }
+.code-map text { font: 600 11px Arial, Helvetica, sans-serif; fill: var(--foreground); stroke: var(--background); stroke-width: 3px; paint-order: stroke; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.map-readout { min-height: 24px; margin: -6px 0 10px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
 .legend span { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 
@@ -148,6 +150,7 @@ summary { cursor: pointer; color: var(--muted); font-size: 14px; }
   .metric h2, .metric small { font-size: 14px; }
   .row { gap: 12px; }
   .mono { font-size: 13px; }
+  .code-map text { display: none; }
   .controls { display: grid; grid-template-columns: 1fr; }
   input, select { min-width: 0; width: 100%; }
   h1 { font-size: 26px; margin-bottom: 16px; }

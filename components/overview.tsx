@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useState } from 'react';
 import { useFeed } from './feed';
 import { categories, categoryName, change, date, format, kib, percent, unitHref } from '@/lib/stats';
 import type { Dataset } from '@/lib/schema';
@@ -98,28 +99,39 @@ const shade = (similarity: number) => shades.find(s => similarity >= s.min)!.col
 /* Lays functions out in rows of a fixed byte width, in the order the build report lists them.
    That order is not guaranteed to be address order, so the map never claims addresses. */
 function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
+  const [hover, setHover] = useState<Dataset['latest']['units'][number] | null>(null);
   const total = units.reduce((n, u) => n + u.functions.reduce((a, f) => a + f.size, 0), 0) || 1;
   const rows = 16, perRow = Math.ceil(total / rows), width = 1000, height = 22, gap = 6;
   const scale = width / perRow;
   let offset = 0;
   const groups = units.filter(u => u.functions.length).map(u => {
-    const rects: React.ReactNode[] = [];
+    const rects: React.ReactNode[] = [], spans = new Map<number, [number, number]>();
     u.functions.forEach((f, i) => {
       let start = offset, left = f.size;
       while (left > 0) {
         const row = Math.floor(start / perRow), inRow = Math.min(left, (row + 1) * perRow - start);
-        rects.push(<rect key={`${i}-${row}`} x={(start - row * perRow) * scale} y={row * (height + gap)} width={inRow * scale} height={height} fill={shade(f.similarity)}>
+        const x = (start - row * perRow) * scale, w = inRow * scale, span = spans.get(row);
+        spans.set(row, [span ? span[0] : x, x + w]);
+        rects.push(<rect key={`${i}-${row}`} x={x} y={row * (height + gap)} width={w} height={height} fill={shade(f.similarity)}>
           <title>{`${u.name} · ${f.name} · ${format(f.size)} B · ${f.similarity.toFixed(1)}%`}</title></rect>);
         start += inRow; left -= inRow;
       }
       offset += f.size;
     });
-    return <a key={u.name} href={unitHref(u.name)} aria-label={u.name}>{rects}</a>;
+    // Label the unit wherever its run is wide enough to hold the short name.
+    const short = u.name.split('/').at(-1)!;
+    const labels = [...spans].filter(([, [a, b]]) => b - a >= short.length * 6.4 + 8).map(([row, [a, b]]) =>
+      <text key={`label-${row}`} x={(a + b) / 2} y={row * (height + gap) + height / 2}>{short}</text>);
+    return <a key={u.name} href={unitHref(u.name)} aria-label={u.name} onMouseEnter={() => setHover(u)} onFocus={() => setHover(u)}>{rects}{labels}</a>;
   });
+  const m = hover?.measures;
   return <>
     <div className="row section-heading"><h2>Code map</h2>
       <ul className="legend">{shades.map(s => <li key={s.label}><span style={{ background: s.color }} />{s.label}</li>)}</ul></div>
-    <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} preserveAspectRatio="none" role="img" aria-label="Functions by objdiff similarity, sized by code bytes">{groups}</svg>
-    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in build-report order. Hover for details; click to open its unit.</p>
+    <p className="map-readout" aria-live="polite">{hover && m
+      ? <><span className="mono">{hover.name}</span> · {percent(m.matched_code, m.total_code).toFixed(1)}% · {format(m.matched_functions)} / {format(m.total_functions)} functions{hover.complete && <> · <span className="good">complete</span></>}</>
+      : 'Hover a block to see its unit.'}</p>
+    <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="img" aria-label="Functions by objdiff similarity, sized by code bytes" onMouseLeave={() => setHover(null)}>{groups}</svg>
+    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in build-report order. Units are labelled where they fit; hover for the rest, click to open one.</p>
   </>;
 }
