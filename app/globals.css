@@ -66,7 +66,7 @@ main { max-width: 1800px; margin: auto; padding: 24px 40px 48px; }
 .code-map rect { shape-rendering: crispEdges; }
 .map-dividers line { stroke: var(--card); stroke-width: 2px; vector-effect: non-scaling-stroke; pointer-events: none; }
 .map-outline rect { fill: none; stroke: var(--foreground); stroke-width: 2px; vector-effect: non-scaling-stroke; pointer-events: none; }
-.code-map text { font: 600 11px Arial, Helvetica, sans-serif; fill: var(--foreground); stroke: var(--background); stroke-width: 3px; paint-order: stroke; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.code-map text { font: 600 11px Arial, Helvetica, sans-serif; fill: var(--foreground); stroke: var(--background); stroke-width: 3px; stroke-linejoin: round; stroke-linecap: round; paint-order: stroke; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 .map-readout { min-height: 24px; margin: -6px 0 10px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
 .legend span { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
