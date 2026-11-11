@@ -27,14 +27,19 @@ export function Overview() {
     .slice(0, 6);
   const trend = data.history.length >= 2;
 
+  const code = percent(m.matched_code, m.total_code);
+
   return <>
-    <h1>Matching progress</h1>
-    <div className="metrics">{[
-      ['Code matched', `${percent(m.matched_code, m.total_code).toFixed(1)}%`, `${kib(m.matched_code)} of ${kib(m.total_code)}`],
-      ['Functions matched', format(m.matched_functions), `${percent(m.matched_functions, m.total_functions).toFixed(1)}% of ${format(m.total_functions)}`],
-      ['Code remaining', kib(m.total_code - m.matched_code), `${format(m.total_functions - m.matched_functions)} functions`],
-      ['Since previous report', since.value, since.detail],
-    ].map(([label, value, detail]) => <section className="metric" key={label}><h2>{label}</h2><strong>{value}</strong><small>{detail}</small></section>)}</div>
+    <div className="page-heading"><div><h1>Matching progress</h1><p>Objdiff results for the GameCube build of LEGO Star Wars: The Video Game (GL5E4F).</p></div></div>
+    <section className="panel hero">
+      <div className="stats">{[
+        ['Code matched', `${code.toFixed(2)}%`, `${kib(m.matched_code)} of ${kib(m.total_code)} in objdiff-matched functions`],
+        ['Functions matched', `${format(m.matched_functions)} / ${format(m.total_functions)}`, 'Fully matching / total'],
+        ['Code remaining', kib(m.total_code - m.matched_code), `Across ${format(m.total_functions - m.matched_functions)} unmatched functions`],
+        ['Since previous report', since.value, since.detail],
+      ].map(([label, value, detail]) => <div className="stat" key={label}><h2>{label}</h2><strong>{value}</strong><small>{detail}</small></div>)}</div>
+      <div className="track big" role="progressbar" aria-label="Code matched" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Number(code.toFixed(2))}><div style={{ width: `${Math.min(100, code)}%` }} /></div>
+    </section>
 
     <div className="grid">
       <section className="panel">
@@ -50,6 +55,8 @@ export function Overview() {
         <Meter label="Matched data" value={percent(m.matched_data, m.total_data)} detail={`${kib(m.matched_data)} / ${kib(m.total_data)}`} />
         <p className="caveat">Objdiff matches are not promotion. Promotion also needs matching sections, relocations and linked retail ranges.</p>
       </section>
+
+      <section className="panel wide"><CodeMap units={data.latest.units} /></section>
 
       {trend && <section className="panel"><h2>Progress over time</h2><History points={data.history} /></section>}
 
@@ -77,5 +84,42 @@ function History({ points }: { points: Dataset['history'] }) {
     <details><summary>{format(points.length)} reports</summary><div className="table-scroll"><table><thead><tr><th>Report</th><th className="num">Code matched</th><th className="num">Functions</th></tr></thead><tbody>
       {[...points].reverse().map(p => <tr key={p.id}><td>{date(p.report_at)}</td><td className="num">{kib(p.measures.matched_code)} ({percent(p.measures.matched_code, p.measures.total_code).toFixed(2)}%)</td><td className="num">{format(p.measures.matched_functions)}</td></tr>)}
     </tbody></table></div></details>
+  </>;
+}
+
+const shades = [
+  { min: 100, label: '100%', color: 'var(--green)' },
+  { min: 90, label: '90–99%', color: 'var(--lime)' },
+  { min: 0.01, label: 'Under 90%', color: 'var(--warning)' },
+  { min: 0, label: '0%', color: 'var(--track)' },
+];
+const shade = (similarity: number) => shades.find(s => similarity >= s.min)!.color;
+
+/* Lays functions out in rows of a fixed byte width, in the order the build report lists them.
+   That order is not guaranteed to be address order, so the map never claims addresses. */
+function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
+  const total = units.reduce((n, u) => n + u.functions.reduce((a, f) => a + f.size, 0), 0) || 1;
+  const rows = 16, perRow = Math.ceil(total / rows), width = 1000, height = 22, gap = 6;
+  const scale = width / perRow;
+  let offset = 0;
+  const groups = units.filter(u => u.functions.length).map(u => {
+    const rects: React.ReactNode[] = [];
+    u.functions.forEach((f, i) => {
+      let start = offset, left = f.size;
+      while (left > 0) {
+        const row = Math.floor(start / perRow), inRow = Math.min(left, (row + 1) * perRow - start);
+        rects.push(<rect key={`${i}-${row}`} x={(start - row * perRow) * scale} y={row * (height + gap)} width={inRow * scale} height={height} fill={shade(f.similarity)}>
+          <title>{`${u.name} · ${f.name} · ${format(f.size)} B · ${f.similarity.toFixed(1)}%`}</title></rect>);
+        start += inRow; left -= inRow;
+      }
+      offset += f.size;
+    });
+    return <a key={u.name} href={unitHref(u.name)} aria-label={u.name}>{rects}</a>;
+  });
+  return <>
+    <div className="row section-heading"><h2>Code map</h2>
+      <ul className="legend">{shades.map(s => <li key={s.label}><span style={{ background: s.color }} />{s.label}</li>)}</ul></div>
+    <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} preserveAspectRatio="none" role="img" aria-label="Functions by objdiff similarity, sized by code bytes">{groups}</svg>
+    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in build-report order. Hover for details; click to open its unit.</p>
   </>;
 }
