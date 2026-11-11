@@ -55,7 +55,7 @@ export function Overview() {
 
       <section className={trend ? 'panel' : 'panel wide'}>
         <div className="row section-heading"><h2>Largest remaining units</h2><Link href="/units">All units →</Link></div>
-        <div className="unit-list">{top.map(({ u, left }) => <Meter key={u.name} label={u.name} href={unitHref(u.name)} value={percent(u.measures.matched_code, u.measures.total_code)}
+        <div className="unit-list" style={{ '--rows': Math.ceil(top.length / 2) } as React.CSSProperties}>{top.map(({ u, left }) => <Meter key={u.name} label={u.name} href={unitHref(u.name)} value={percent(u.measures.matched_code, u.measures.total_code)}
           detail={`${kib(left)} left · ${format(u.measures.total_functions - u.measures.matched_functions)} functions`} />)}</div>
       </section>
     </div>
