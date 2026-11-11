@@ -35,3 +35,10 @@ test('the change card never reports a missing comparison as zero', () => {
   assert.equal(change([gained,point],current).value,'+2,048 B');
   assert.match(change([gained,point],current).detail,/^\+3 functions since /);
 });
+
+test('the bundled seed lists code in load-address order, so the code map can say so', () => {
+  // Auto-named functions carry their address; named ones are skipped.
+  const addresses = data.latest.units.flatMap(u => u.functions.map(f => /^fn_([0-9A-F]{8})$/i.exec(f.name)?.[1])).filter(Boolean).map(a => parseInt(a!, 16));
+  assert.ok(addresses.length > 1000);
+  assert.ok(addresses.every((a, i) => i === 0 || a > addresses[i - 1]));
+});

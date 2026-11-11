@@ -96,8 +96,8 @@ const shades = [
 ];
 const shade = (similarity: number) => shades.find(s => similarity >= s.min)!.color;
 
-/* Lays functions out in rows of a fixed byte width, in the order the build report lists them.
-   That order is not guaranteed to be address order, so the map never claims addresses. */
+/* Lays functions out in rows of a fixed byte width, in dataset order. The decomp exporter
+   (tools/export_progress.py) lists units and functions by load address; the seed matches. */
 function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
   const [hover, setHover] = useState<Dataset['latest']['units'][number] | null>(null);
   const rows = 16, width = 1000, height = 22, gap = 6;
@@ -139,6 +139,6 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
       ? <><span className="mono">{hover.name}</span> · {percent(m.matched_code, m.total_code).toFixed(1)}% · {format(m.matched_functions)} / {format(m.total_functions)} functions{hover.complete && <> · <span className="good">complete</span></>}</>
       : 'Hover a block to see its unit.'}</p>
     <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="img" aria-label="Functions by objdiff similarity, sized by code bytes" onMouseLeave={() => setHover(null)}>{groups}{hover && <g className="map-outline">{outlines.get(hover.name)}</g>}</svg>
-    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in build-report order. Units are labelled where they fit; hover for the rest, click to open one.</p>
+    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in load-address order. Units are labelled where they fit; hover for the rest, click to open one.</p>
   </>;
 }
