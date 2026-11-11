@@ -31,18 +31,17 @@ small { display: inline-block; }
 /* Shell */
 .site-header { max-width: 1800px; margin: auto; display: flex; align-items: center; gap: 40px; padding: 20px 40px; border-bottom: 1px solid var(--border); }
 .brand { font-size: 22px; color: var(--foreground); font-weight: 700; letter-spacing: -.5px; }
-.brand span { font-size: 15px; color: var(--muted); font-weight: 400; margin-left: 10px; letter-spacing: 0; }
 .site-header nav { display: flex; gap: 8px; }
 .site-header nav a { color: var(--muted); padding: 8px 15px; border-radius: 6px; }
 .site-header nav a[aria-current=page] { color: var(--foreground); background: var(--card); }
 .repo-link { margin-left: auto; font-size: 15px; }
-main, footer { max-width: 1800px; margin: auto; padding: 24px 40px; }
-footer { font-size: 14px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 16px; }
+main { max-width: 1800px; margin: auto; padding: 24px 40px 48px; }
 .freshness { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
 .freshness p { margin: 0; }
 .status-dot { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--warning); vertical-align: 1px; }
 .status-dot.published { background: var(--green); }
-.warning { color: var(--warning); margin-top: 4px !important; }
+.warning { color: var(--warning); }
+.freshness p + p { margin-top: 4px; }
 
 /* Headings and cards */
 .page-heading { display: flex; justify-content: space-between; gap: 24px; align-items: center; margin-bottom: 24px; }
@@ -119,9 +118,8 @@ summary { cursor: pointer; color: var(--muted); font-size: 14px; }
   .site-header { gap: 20px; }
 }
 @media (max-width: 650px) {
-  main, footer { padding: 20px 16px; }
+  main { padding: 20px 16px 32px; }
   .site-header { padding: 16px; gap: 12px; flex-wrap: wrap; }
-  .brand span { display: none; }
   .site-header nav { gap: 0; order: 3; width: 100%; }
   .site-header nav a { padding: 8px 14px; }
   .page-heading { align-items: start; flex-direction: column; }
