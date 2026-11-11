@@ -8,5 +8,5 @@ export const metadata: Metadata = { title: { default: 'LSW1 progress', template:
 export const dynamic = 'force-dynamic';
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const feed = await getProgress();
-  return <html lang="en"><body><FeedProvider initial={feed}><header className="site-header"><Link className="brand" href="/">LSW1<span>decompilation</span></Link><Navigation /><a className="repo-link" href="https://github.com/ellierocks767/lsw1-decomp">Source ↗</a></header><main><Freshness />{children}</main><footer>LEGO Star Wars: The Video Game · GameCube GL5E4F. An independent decompilation project.<br />Statistics come from successful project builds. A function match does not establish unit promotion.</footer></FeedProvider></body></html>;
+  return <html lang="en"><body><FeedProvider initial={feed}><header className="site-header"><Link className="brand" href="/">LSW1<span>decompilation</span></Link><Navigation /><a className="repo-link" href="https://github.com/ellierocks767/lsw1-decomp">Source ↗</a></header><main><Freshness />{children}</main><footer>LEGO Star Wars: The Video Game · GameCube GL5E4F · an independent decompilation project</footer></FeedProvider></body></html>;
 }
