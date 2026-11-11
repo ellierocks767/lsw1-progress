@@ -4,7 +4,7 @@ import { FeedProvider } from '@/components/feed';
 import { Navigation, Freshness } from '@/components/shell';
 import { getProgress } from '@/lib/progress';
 import './globals.css';
-export const metadata: Metadata = { title: { default: 'LSW1 progress', template: '%s · LSW1 progress' }, description: 'Matching progress for LEGO Star Wars: The Video Game on GameCube.' };
+export const metadata: Metadata = { title: { default: 'lsw1-decomp', template: '%s · lsw1-decomp' }, description: 'Matching progress for LEGO Star Wars: The Video Game on GameCube.' };
 export const dynamic = 'force-dynamic';
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const feed = await getProgress();
