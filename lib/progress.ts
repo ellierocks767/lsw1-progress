@@ -12,6 +12,6 @@ export async function getProgress(): Promise<Feed> {
     const data = datasetSchema.parse(await response.json());
     return { data, source: 'published', warning: null };
   } catch {
-    return { data: fallback, source: 'bundled', warning: 'The published feed is unavailable. Showing the bundled snapshot.' };
+    return { data: fallback, source: 'bundled', warning: 'Live build stats are unavailable. Showing a saved snapshot.' };
   }
 }

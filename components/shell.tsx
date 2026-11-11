@@ -10,5 +10,12 @@ export function Navigation() {
 export function Freshness() {
   const { data, source, warning } = useFeed();
   const s = data.latest;
-  return <div className="freshness"><div><span className="status-dot" />{source === 'published' ? 'Published report' : 'Bundled snapshot'} · {date(s.report_at)}</div>{warning && <p className="warning" role="status">{warning}</p>}<small>{s.revision ? <>Revision <a href={`https://github.com/ellierocks767/lsw1-decomp/commit/${s.revision}`}>{s.revision.slice(0, 7)}</a></> : 'Local snapshot; build revision not recorded.'}{s.build_url && <> · <a href={s.build_url}>Build evidence</a></>} · Checks for new data every minute.</small></div>;
+  // A bundled snapshot has no recorded build revision, so it must not read as a verified build.
+  if (source === 'bundled') return <div className="freshness">
+    <p className="warning" role="status"><span className="status-dot" />Live build stats are unavailable right now. Showing a saved snapshot from {date(s.report_at)}, not tied to a specific build.</p>
+  </div>;
+  return <div className="freshness">
+    <p><span className="status-dot published" />Stats from the latest successful build, {date(s.report_at)}{s.revision && <> · commit <a href={`https://github.com/ellierocks767/lsw1-decomp/commit/${s.revision}`}>{s.revision.slice(0, 7)}</a></>}{s.build_url && <> · <a href={s.build_url}>build log</a></>}. Updates automatically.</p>
+    {warning && <p className="warning" role="status">{warning}</p>}
+  </div>;
 }

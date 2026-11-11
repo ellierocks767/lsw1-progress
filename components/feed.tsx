@@ -17,12 +17,12 @@ export function FeedProvider({ initial, children }: { initial: Feed; children: R
         setFeed(previous => {
           // A transient upstream failure should not replace good published data with an old seed.
           if (next.source !== 'published' && previous.source === 'published') {
-            return { ...previous, warning: 'Refresh failed. Showing the last published report received.' };
+            return { ...previous, warning: 'Couldn’t check for newer stats. Showing the last ones loaded.' };
           }
           return { data, source: next.source === 'published' ? 'published' : 'bundled', warning: next.warning };
         });
       } catch {
-        if (alive) setFeed(previous => ({ ...previous, warning: 'Refresh failed. Showing the last report received.' }));
+        if (alive) setFeed(previous => ({ ...previous, warning: 'Couldn’t check for newer stats. Showing the last ones loaded.' }));
       }
     }
     const interval = setInterval(refresh, 60_000);

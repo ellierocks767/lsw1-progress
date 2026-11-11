@@ -23,3 +23,11 @@ export function delta(history: Dataset['history'], current: Measures) {
   return { bytes: current.matched_code - prior.measures.matched_code,
     functions: current.matched_functions - prior.measures.matched_functions, since: prior.report_at };
 }
+// Labels for the "since previous report" card. One report is not a zero gain.
+export function change(history: Dataset['history'], current: Measures) {
+  if (history.length < 2) return { value: 'First report', detail: 'Changes appear after the next build' };
+  const d = delta(history, current);
+  if (!d) return { value: 'Not comparable', detail: 'Totals changed since the last report' };
+  const sign = (n: number) => (n > 0 ? '+' : '') + format(n);
+  return { value: `${sign(d.bytes)} B`, detail: `${sign(d.functions)} functions since ${date(d.since)}` };
+}
