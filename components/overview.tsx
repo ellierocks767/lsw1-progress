@@ -45,15 +45,17 @@ export function Overview() {
     <div className="grid">
       <section className="panel">
         <h2>Code by subsystem</h2>
-        {categories(data.latest.units).map(([name, g]) => <Meter key={name} label={categoryName(name)} value={percent(g.matched, g.total)}
+        {categories(data.latest.units).sort(([, a], [, b]) => percent(b.matched, b.total) - percent(a.matched, a.total)).map(([name, g]) => <Meter key={name} label={categoryName(name)} value={percent(g.matched, g.total)}
           detail={`${kib(g.matched)} / ${kib(g.total)} · ${format(g.done)} / ${format(g.functions)} functions`} />)}
       </section>
 
       <section className="panel">
         <h2>Completion</h2>
-        <Meter label="Code in complete units" value={percent(m.complete_code, m.total_code)} detail={`${kib(m.complete_code)} / ${kib(m.total_code)}`} />
-        <Meter label="Complete units" value={percent(m.complete_units, m.total_units)} detail={`${format(m.complete_units)} / ${format(m.total_units)}, including data-only units`} />
-        <Meter label="Matched data" value={percent(m.matched_data, m.total_data)} detail={`${kib(m.matched_data)} / ${kib(m.total_data)}`} />
+        {[
+          { label: 'Code in complete units', value: percent(m.complete_code, m.total_code), detail: `${kib(m.complete_code)} / ${kib(m.total_code)}` },
+          { label: 'Complete units', value: percent(m.complete_units, m.total_units), detail: `${format(m.complete_units)} / ${format(m.total_units)}, including data-only units` },
+          { label: 'Matched data', value: percent(m.matched_data, m.total_data), detail: `${kib(m.matched_data)} / ${kib(m.total_data)}` },
+        ].sort((a, b) => b.value - a.value).map(x => <Meter key={x.label} {...x} />)}
         <p className="caveat">Objdiff matches are not promotion. Promotion also needs matching sections, relocations and linked retail ranges.</p>
       </section>
 
