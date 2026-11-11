@@ -34,7 +34,7 @@ export function Overview() {
     <div className="page-heading"><div><h1>Matching progress</h1><p>Objdiff results for the GameCube build of LEGO Star Wars: The Video Game (GL5E4F).</p></div></div>
     <section className="panel hero">
       <div className="stats">{[
-        ['Code matched', `${code.toFixed(2)}%`, `${kib(m.matched_code)} of ${kib(m.total_code)} in objdiff-matched functions`],
+        ['Code matched', `${code.toFixed(2)}%`, `${kib(m.matched_code)} of ${kib(m.total_code)}`],
         ['Functions matched', `${format(m.matched_functions)} / ${format(m.total_functions)}`, 'Fully matching / total'],
         ['Code remaining', kib(m.total_code - m.matched_code), `Across ${format(m.total_functions - m.matched_functions)} unmatched functions`],
         ['Since previous report', since.value, since.detail],
