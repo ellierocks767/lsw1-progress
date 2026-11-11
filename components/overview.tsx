@@ -104,12 +104,13 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
   const [hover, setHover] = useState<Dataset['latest']['units'][number] | null>(null);
   const rows = 16, width = 1000, height = 22, gap = 6;
   // Build the blocks once per dataset so hovering only redraws the outline and readout.
-  const { groups, outlines } = useMemo(() => {
+  const { groups, outlines, dividers } = useMemo(() => {
   const total = units.reduce((n, u) => n + u.functions.reduce((a, f) => a + f.size, 0), 0) || 1;
   const perRow = Math.ceil(total / rows);
   const scale = width / perRow;
   let offset = 0;
   const outlines = new Map<string, React.ReactNode[]>();
+  const dividers: React.ReactNode[] = [];
   const groups = units.filter(u => u.functions.length).map(u => {
     const rects: React.ReactNode[] = [], spans = new Map<number, [number, number]>();
     u.functions.forEach((f, i) => {
@@ -124,6 +125,8 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
       }
       offset += f.size;
     });
+    // A gap at the start of each unit separates neighbours of the same colour.
+    for (const [row, [a]] of spans) if (a > 0) dividers.push(<line key={`${u.name}-${row}`} x1={a} x2={a} y1={row * (height + gap)} y2={row * (height + gap) + height} />);
     // Label the unit wherever its run is wide enough to hold the short name.
     outlines.set(u.name, [...spans].map(([row, [a, b]]) => <rect key={row} x={a} y={row * (height + gap)} width={b - a} height={height} />));
     const short = u.name.split('/').at(-1)!;
@@ -131,7 +134,7 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
       <text key={`label-${row}`} x={(a + b) / 2} y={row * (height + gap) + height / 2}>{short}</text>);
     return <a key={u.name} href={unitHref(u.name)} aria-label={u.name} onMouseEnter={() => setHover(u)} onFocus={() => setHover(u)}>{rects}{labels}</a>;
   });
-  return { groups, outlines };
+  return { groups, outlines, dividers };
   }, [units]);
   const m = hover?.measures;
   return <>
@@ -140,7 +143,7 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
     <p className="map-readout" aria-live="polite">{hover && m
       ? <><span className="mono">{hover.name}</span> · {percent(m.matched_code, m.total_code).toFixed(1)}% · {format(m.matched_functions)} / {format(m.total_functions)} functions{hover.complete && <> · <span className="good">complete</span></>}</>
       : 'Hover a block to see its unit.'}</p>
-    <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="img" aria-label="Functions by objdiff similarity, sized by code bytes" onMouseLeave={() => setHover(null)}>{groups}{hover && <g className="map-outline">{outlines.get(hover.name)}</g>}</svg>
-    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in load-address order. Units are labelled where they fit; hover for the rest, click to open one.</p>
+    <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="img" aria-label="Functions by objdiff similarity, sized by code bytes" onMouseLeave={() => setHover(null)}>{groups}<g className="map-dividers">{dividers}</g>{hover && <g className="map-outline">{outlines.get(hover.name)}</g>}</svg>
+    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in load-address order. Dark lines separate units, which are labelled where they fit; hover for the rest, click to open one.</p>
   </>;
 }
