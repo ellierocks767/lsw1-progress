@@ -44,3 +44,6 @@ export function change(history: Dataset['history'], current: Measures) {
   const sign = (n: number) => (n > 0 ? '+' : '') + format(n);
   return { value: `${sign(d.bytes)} B`, detail: `${sign(d.functions)} functions since ${date(d.since)}` };
 }
+// A verdict absent from the sweep is unavailable, not zero.
+export const verdictCount = (verdicts: Record<string, number>, key: string) =>
+  Object.hasOwn(verdicts, key) ? format(verdicts[key]) : 'Not reported';
