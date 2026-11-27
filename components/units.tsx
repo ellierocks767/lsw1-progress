@@ -3,17 +3,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useFeed } from './feed';
 import { Bar } from './overview';
-import { categoryName, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
+import { categoryName, compareUnits, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
 export function UnitTable() {
   const { data } = useFeed();const [search,setSearch]=useState(''),[category,setCategory]=useState('all'),[sort,setSort]=useState('remaining');
   const all=data.latest.units;
-  const units=all.filter(u=>u.name.toLowerCase().includes(search.toLowerCase())&&(category==='all'||u.category===category)).sort((a,b)=>{
-    const am=a.measures,bm=b.measures;
-    if(sort==='functions')return (bm.total_functions-bm.matched_functions)-(am.total_functions-am.matched_functions);
-    if(sort==='coverage')return percent(bm.matched_code,bm.total_code)-percent(am.matched_code,am.total_code);
-    if(sort==='name')return a.name.localeCompare(b.name);
-    return (bm.total_code-bm.matched_code)-(am.total_code-am.matched_code);
-  });
+  const units=all.filter(u=>u.name.toLowerCase().includes(search.toLowerCase())&&(category==='all'||u.category===category)).sort((a,b)=>compareUnits(sort,a,b));
   return <><div className="page-heading"><div><h1>Units</h1><p>Coverage and remaining work by translation unit.</p></div><span className="badge">{format(units.length)} of {format(all.length)} units</span></div><section className="panel"><div className="controls"><label>Find a unit<input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Name or path" /></label><label>Subsystem<select value={category} onChange={e=>setCategory(e.target.value)}><option value="all">All subsystems</option>{[...new Set(all.map(u=>u.category))].sort().map(c=><option key={c} value={c}>{categoryName(c)}</option>)}</select></label><label>Sort by<select value={sort} onChange={e=>setSort(e.target.value)}><option value="remaining">Bytes remaining</option><option value="functions">Functions remaining</option><option value="coverage">Code coverage</option><option value="name">Name</option></select></label></div><div className="table-scroll"><table><thead><tr><th>Unit</th><th className="num">Matched code</th><th className="num">Remaining code</th><th className="num">Functions matched</th><th className="num">Coverage</th><th>Status</th></tr></thead><tbody>{units.map(u=><tr key={u.name}><td><Link className="mono" href={unitHref(u.name)}>{u.name}</Link><small className="block">{categoryName(u.category)}</small></td><td className="num">{kib(u.measures.matched_code)}</td><td className="num">{kib(u.measures.total_code-u.measures.matched_code)}</td><td className="num">{format(u.measures.matched_functions)} / {format(u.measures.total_functions)}</td><td className="num coverage-cell">
     {u.measures.total_code === 0 ? 'No code' : <>{formatPercent(percent(u.measures.matched_code,u.measures.total_code),1)}<Bar value={percent(u.measures.matched_code,u.measures.total_code)} /></>}
   </td><td><span className={u.complete?'good':'muted'}>{u.complete?'Complete':'In progress'}</span></td></tr>)}</tbody></table></div>{!units.length&&<p className="empty">No units match these filters.</p>}</section></>;

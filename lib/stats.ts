@@ -50,3 +50,17 @@ export function change(history: Dataset['history'], current: Measures) {
 // A verdict absent from the sweep is unavailable, not zero.
 export const verdictCount = (verdicts: Record<string, number>, key: string) =>
   Object.hasOwn(verdicts, key) ? format(verdicts[key]) : 'Not reported';
+// Unit table ordering. Units without code have no coverage, so they follow every unit that has some
+// rather than tying with genuine 0% units. Ties fall back to name so the order is deterministic.
+export type UnitSort = 'remaining' | 'functions' | 'coverage' | 'name';
+export function compareUnits(sort: UnitSort | string, a: Unit, b: Unit) {
+  const am = a.measures, bm = b.measures;
+  const byName = a.name.localeCompare(b.name);
+  if (sort === 'name') return byName;
+  if (sort === 'functions') return (bm.total_functions - bm.matched_functions) - (am.total_functions - am.matched_functions) || byName;
+  if (sort === 'coverage') {
+    if (!am.total_code || !bm.total_code) return (am.total_code ? 0 : 1) - (bm.total_code ? 0 : 1) || byName;
+    return bm.matched_code / bm.total_code - am.matched_code / am.total_code || byName;
+  }
+  return (bm.total_code - bm.matched_code) - (am.total_code - am.matched_code) || byName;
+}
