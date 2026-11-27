@@ -21,7 +21,7 @@ function Meter({ label, value, detail, href }: { label: string; value: number | 
 export function Overview() {
   const { data } = useFeed();
   const m = data.latest.measures;
-  const since = change(data.history, m);
+  const since = change(data.history, m, data.latest.id);
   const top = data.latest.units
     .map(u => ({ u, left: u.measures.total_code - u.measures.matched_code }))
     .filter(x => x.left > 0)

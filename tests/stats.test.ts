@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import seed from '../data/seed.json';
 import { datasetSchema } from '../lib/schema';
-import { categories, change, delta, formatSimilarity, percent, unitHref } from '../lib/stats';
+import { categories, change, delta, previousReport, formatSimilarity, percent, unitHref } from '../lib/stats';
 const data = datasetSchema.parse(seed);
 test('seed matches the public schema and category totals reconcile', () => {
   const groups = categories(data.latest.units);
@@ -151,4 +151,21 @@ test('coverage sort puts units without code after every unit that has code', asy
   assert.deepEqual([...rows].sort((a, b) => compareUnits('coverage', a, b)).map(u => u.name), ['most', 'half', 'zero', 'a-none', 'none']);
   // Equal values fall back to name so the order is stable.
   assert.deepEqual([unit('b', 1, 2), unit('a', 1, 2)].sort((a, b) => compareUnits('remaining', a, b)).map(u => u.name), ['a', 'b']);
+});
+
+test('the previous report is found relative to the latest report, not the end of history', () => {
+  const current = data.latest.measures;
+  const point = { ...data.history[0], id: 'latest', measures: current };
+  const older = { ...point, id: 'older', report_at: '2026-01-01T00:00:00Z', measures: { ...current, matched_code: current.matched_code - 100 } };
+  const newer = { ...point, id: 'newer', report_at: '2026-12-01T00:00:00Z' };
+  // A feed with a later point after the latest must still compare against the report before the latest.
+  assert.equal(previousReport([older, point, newer], 'latest')?.id, 'older');
+  assert.equal(delta([older, point, newer], current, 'latest')?.bytes, 100);
+  // The latest report is first in its history: nothing to compare.
+  assert.equal(change([point, newer], current, 'latest').value, 'First report');
+  // The latest is missing from history: compare with the newest listed report.
+  assert.equal(previousReport([older], 'latest')?.id, 'older');
+  assert.equal(delta([older], current, 'latest')?.bytes, 100);
+  // Without an id the old behaviour (latest is last) holds.
+  assert.equal(previousReport([older, point])?.id, 'older');
 });
