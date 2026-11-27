@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useFeed } from './feed';
-import { categories, categoryName, change, date, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
+import { ariaPercent, categories, categoryName, change, date, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
 import type { Dataset } from '@/lib/schema';
 
 export function Bar({ value }: { value: number }) {
@@ -39,7 +39,7 @@ export function Overview() {
         ['Code remaining', kib(m.total_code - m.matched_code), `Across ${format(m.total_functions - m.matched_functions)} unmatched functions`],
         ['Since previous report', since.value, since.detail],
       ].map(([label, value, detail]) => <div className="stat" key={label}><h2>{label}</h2><strong>{value}</strong><small>{detail}</small></div>)}</div>
-      <div className="track big" role="progressbar" aria-label="Code matched" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Number(code.toFixed(2))}><div style={{ width: `${Math.min(100, code)}%` }} /></div>
+      <div className="track big" role="progressbar" aria-label="Code matched" aria-valuemin={0} aria-valuemax={100} aria-valuenow={ariaPercent(code)}><div style={{ width: `${Math.min(100, code)}%` }} /></div>
     </section>
 
     <div className="grid">

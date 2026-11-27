@@ -8,6 +8,8 @@ export function formatPercent(value: number, digits = 1) {
   if (value < 100 && Number(rounded) >= 100) return '<100%';
   return `${rounded}%`;
 }
+// Screen-reader value: truncated (not rounded) so incomplete code never reads as 100.
+export const ariaPercent = (value: number) => Math.min(100, Math.floor(value * 100) / 100);
 export const formatSimilarity = (score: number) => formatPercent(score, 2);
 export const date = (s: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(s)) + ' UTC';
 const categoryNames: Record<string, string> = { game: 'Game and Nu2', sdk: 'Dolphin SDK', runtime: 'SN runtime', other: 'Unclassified code' };
