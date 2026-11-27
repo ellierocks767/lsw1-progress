@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useFeed } from './feed';
-import { ariaPercent, categories, categoryName, change, date, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
+import { ariaPercent, categories, categoryName, change, codeCoverage, date, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
 import type { Dataset } from '@/lib/schema';
 
 export function Bar({ value }: { value: number }) {
@@ -145,7 +145,7 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
     <div className="row section-heading"><h2>Code map</h2>
       <ul className="legend">{shades.map(s => <li key={s.label}><span style={{ background: s.color }} />{s.label}</li>)}</ul></div>
     <p className="map-readout" aria-live="polite">{active && m
-      ? <><span className="mono">{active.name}</span> · {formatPercent(percent(m.matched_code, m.total_code),1)} · {format(m.matched_functions)} / {format(m.total_functions)} functions{active.complete && <> · <span className="good">complete</span></>}</>
+      ? <><span className="mono">{active.name}</span> · {codeCoverage(m)} · {format(m.matched_functions)} / {format(m.total_functions)} functions{active.complete && <> · <span className="good">complete</span></>}</>
       : 'Hover or focus a unit to see its progress.'}</p>
     <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="group" aria-label="Functions by objdiff similarity, sized by code bytes">{groups}<g className="map-dividers">{dividers}</g>{active && <g className="map-outline">{outlines.get(active.name)}</g>}</svg>
     <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in load-address order. Dark lines separate units, which are labelled where they fit.</p>

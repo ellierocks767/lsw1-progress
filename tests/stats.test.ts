@@ -135,3 +135,11 @@ test('sweep verdicts missing from the export are not reported as zero', async ()
   assert.equal(verdictCount({}, 'COMPILE-ERROR'), 'Not reported');
   assert.equal(verdictCount({}, 'constructor'), 'Not reported');
 });
+
+test('code coverage labels say "No code" instead of 0.0% for units without code', async () => {
+  const { codeCoverage } = await import('../lib/stats');
+  assert.equal(codeCoverage({ matched_code: 0, total_code: 0 }), 'No code');
+  assert.equal(codeCoverage({ matched_code: 0, total_code: 100 }), '0.0%');
+  assert.equal(codeCoverage({ matched_code: 1, total_code: 3 }, 2), '33.33%');
+  assert.equal(codeCoverage({ matched_code: 99999, total_code: 100000 }), '<100%');
+});
