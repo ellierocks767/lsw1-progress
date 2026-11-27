@@ -9,7 +9,7 @@ export function FeedProvider({ initial, children }: { initial: Feed; children: R
     const controller = new AbortController();
     async function refresh() {
       try {
-        const response = await fetch('/api/progress', { cache: 'no-store', signal: controller.signal });
+        const response = await fetch('/api/progress', { signal: controller.signal });
         if (!response.ok) throw new Error('Refresh failed');
         const next = await response.json();
         const data = datasetSchema.parse(next.data);
