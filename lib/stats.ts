@@ -10,6 +10,9 @@ export function formatPercent(value: number, digits = 1) {
 }
 // Screen-reader value: truncated (not rounded) so incomplete code never reads as 100.
 export const ariaPercent = (value: number) => Math.min(100, Math.floor(value * 100) / 100);
+// Units without code (data-only) have no coverage to state; say so rather than 0.0%.
+export const codeCoverage = (m: Pick<Measures, 'matched_code' | 'total_code'>, digits = 1) =>
+  m.total_code === 0 ? 'No code' : formatPercent(percent(m.matched_code, m.total_code), digits);
 export const formatSimilarity = (score: number) => formatPercent(score, 2);
 export const date = (s: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(s)) + ' UTC';
 const categoryNames: Record<string, string> = { game: 'Game and Nu2', sdk: 'Dolphin SDK', runtime: 'SN runtime', other: 'Unclassified code' };
