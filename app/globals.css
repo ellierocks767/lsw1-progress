@@ -21,7 +21,7 @@
 body { margin: 0; background: var(--background); }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
-a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, .table-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, .table-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 h1, h2, p { margin-top: 0; }
 h1 { font-size: 30px; line-height: 1.2; letter-spacing: -.6px; margin-bottom: 20px; }
 h2 { font-size: 18px; line-height: 1.35; font-weight: 600; margin-bottom: 16px; }
@@ -112,6 +112,10 @@ td:last-child, th:last-child { padding-right: 0; }
 tbody tr:last-child > * { border-bottom: 0; }
 .table-scroll { overflow-x: auto; }
 .table-scroll-hint { margin: 8px 0; color: var(--muted); font-size: 14px; }
+.table-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 12px 0; color: var(--muted); font-size: 14px; }
+.table-page-buttons { display: flex; gap: 8px; }
+.table-page-buttons button { min-height: 44px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); color: var(--foreground); font: inherit; cursor: pointer; }
+.table-page-buttons button[aria-disabled="true"] { color: var(--faint); cursor: default; }
 .num { text-align: right; white-space: nowrap; }
 .mono, code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 14px; overflow-wrap: anywhere; }
 .block { display: block; }
