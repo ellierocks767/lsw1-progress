@@ -20,7 +20,8 @@ export const datasetSchema = z.object({
       functions: z.array(z.object({ name: z.string(), size: count, similarity: z.number().min(0).max(100) })) })),
     candidates: z.object({ sweep_at: stamp.nullable(), verdicts: z.record(z.string(), count), rows: z.array(candidate) }).nullable(),
   }),
-  history: z.array(point),
+  // Charts, the reports table and the previous-report comparison all assume oldest first.
+  history: z.array(point).transform(points => [...points].sort((a, b) => Date.parse(a.report_at) - Date.parse(b.report_at))),
 });
 export type Dataset = z.infer<typeof datasetSchema>;
 export type Measures = z.infer<typeof measuresSchema>;

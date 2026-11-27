@@ -39,3 +39,10 @@ test('function similarity outside 0-100 is rejected', () => {
 test('timestamps must be ISO datetimes', () => {
   assert.equal(ok(withLatest({ generated_at: 'yesterday' })), false);
 });
+
+test('history is returned oldest first even when the feed lists it out of order', () => {
+  const older = { ...seed.history[0], id: 'older', report_at: '2026-11-01T00:00:00Z' };
+  const newer = { ...seed.history[0], id: 'newer', report_at: '2026-11-02T00:00:00+00:00' };
+  const parsed = datasetSchema.parse({ ...seed, history: [newer, older] });
+  assert.deepEqual(parsed.history.map(p => p.id), ['older', 'newer']);
+});
