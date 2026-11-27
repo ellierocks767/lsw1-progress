@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useFeed } from './feed';
+import { TableScroll } from './table-scroll';
 import { ariaPercent, categories, categoryName, change, codeCoverage, date, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
 import type { Dataset } from '@/lib/schema';
 
@@ -84,9 +85,9 @@ function History({ points }: { points: Dataset['history'] }) {
       {points.map((p, i) => <circle key={p.id} cx={x(i)} cy={y(i)} r="4" fill="var(--accent)"><title>{date(p.report_at)}: {formatPercent(percent(p.measures.matched_code, p.measures.total_code),2)}</title></circle>)}
     </svg>
     <div className="row detail"><span>{date(points[0].report_at)}</span><span>{date(points.at(-1)!.report_at)}</span></div>
-    <details><summary>{format(points.length)} reports</summary><div className="table-scroll"><table><thead><tr><th>Report</th><th className="num">Code matched</th><th className="num">Functions</th></tr></thead><tbody>
-      {[...points].reverse().map(p => <tr key={p.id}><td>{date(p.report_at)}</td><td className="num">{kib(p.measures.matched_code)} ({formatPercent(percent(p.measures.matched_code, p.measures.total_code),2)})</td><td className="num">{format(p.measures.matched_functions)}</td></tr>)}
-    </tbody></table></div></details>
+    <details><summary>{format(points.length)} reports</summary><TableScroll label="Report history"><thead><tr><th scope="col">Report</th><th scope="col" className="num">Code matched</th><th scope="col" className="num">Functions</th></tr></thead><tbody>
+      {[...points].reverse().map(p => <tr key={p.id}><th scope="row" className="nowrap"><time dateTime={p.report_at}>{date(p.report_at)}</time></th><td className="num">{kib(p.measures.matched_code)} ({formatPercent(percent(p.measures.matched_code, p.measures.total_code),2)})</td><td className="num">{format(p.measures.matched_functions)}</td></tr>)}
+    </tbody></TableScroll></details>
   </>;
 }
 
