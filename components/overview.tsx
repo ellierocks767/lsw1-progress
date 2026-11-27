@@ -9,10 +9,10 @@ export function Bar({ value }: { value: number }) {
   return <div className="track"><div style={{ width: `${Math.min(100, Math.max(0, value))}%` }} /></div>;
 }
 
-function Meter({ label, value, detail, href }: { label: string; value: number; detail?: string; href?: string }) {
+function Meter({ label, value, detail, href }: { label: string; value: number | null; detail?: string; href?: string }) {
   return <div className="meter">
-    <div className="row">{href ? <Link className="mono" href={href}>{label}</Link> : <span>{label}</span>}<span className="figure">{formatPercent(value,1)}</span></div>
-    <Bar value={value} />
+    <div className="row">{href ? <Link className="mono" href={href}>{label}</Link> : <span>{label}</span>}<span className="figure">{value === null ? 'None' : formatPercent(value,1)}</span></div>
+    <Bar value={value ?? 0} />
     {detail && <p className="detail">{detail}</p>}
   </div>;
 }
@@ -45,17 +45,17 @@ export function Overview() {
     <div className="grid">
       <section className="panel">
         <h2>Code by subsystem</h2>
-        {categories(data.latest.units).sort(([, a], [, b]) => percent(b.matched, b.total) - percent(a.matched, a.total)).map(([name, g]) => <Meter key={name} label={categoryName(name)} value={percent(g.matched, g.total)}
+        {categories(data.latest.units).sort(([, a], [, b]) => percent(b.matched, b.total) - percent(a.matched, a.total)).map(([name, g]) => <Meter key={name} label={categoryName(name)} value={g.total === 0 ? null : percent(g.matched, g.total)}
           detail={`${kib(g.matched)} / ${kib(g.total)} · ${format(g.done)} / ${format(g.functions)} functions`} />)}
       </section>
 
       <section className="panel">
         <h2>Completion</h2>
         {[
-          { label: 'Code in complete units', value: percent(m.complete_code, m.total_code), detail: `${kib(m.complete_code)} / ${kib(m.total_code)}` },
-          { label: 'Complete units', value: percent(m.complete_units, m.total_units), detail: `${format(m.complete_units)} / ${format(m.total_units)}, including data-only units` },
-          { label: 'Matched data', value: percent(m.matched_data, m.total_data), detail: `${kib(m.matched_data)} / ${kib(m.total_data)}` },
-        ].sort((a, b) => b.value - a.value).map(x => <Meter key={x.label} {...x} />)}
+          { label: 'Code in complete units', value: m.total_code === 0 ? null : percent(m.complete_code, m.total_code), detail: `${kib(m.complete_code)} / ${kib(m.total_code)}` },
+          { label: 'Complete units', value: m.total_units === 0 ? null : percent(m.complete_units, m.total_units), detail: `${format(m.complete_units)} / ${format(m.total_units)}, including data-only units` },
+          { label: 'Matched data', value: m.total_data === 0 ? null : percent(m.matched_data, m.total_data), detail: `${kib(m.matched_data)} / ${kib(m.total_data)}` },
+        ].sort((a, b) => (b.value ?? -1) - (a.value ?? -1)).map(x => <Meter key={x.label} {...x} />)}
         <p className="caveat">Objdiff matches are not promotion. Promotion also needs matching sections, relocations and linked retail ranges.</p>
       </section>
 
