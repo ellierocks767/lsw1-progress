@@ -16,12 +16,14 @@ export const datasetSchema = z.object({
   latest: point.extend({
     generated_at: stamp,
     build_url: z.string().regex(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/actions\/runs\/\d+$/).nullable(),
+    // Unit names are keys for rows, links and the unit page lookup, so a repeat would hide a unit.
     units: z.array(z.object({ name: z.string(), category: z.string(), complete: z.boolean(), measures: measuresSchema,
-      functions: z.array(z.object({ name: z.string(), size: count, similarity: z.number().min(0).max(100) })) })),
+      functions: z.array(z.object({ name: z.string(), size: count, similarity: z.number().min(0).max(100) })) }))
+      .refine(units => new Set(units.map(u => u.name)).size === units.length, 'Duplicate unit names'),
     candidates: z.object({ sweep_at: stamp.nullable(), verdicts: z.record(z.string(), count), rows: z.array(candidate) }).nullable(),
   }),
   // Charts, the reports table and the previous-report comparison all assume oldest first.
-  history: z.array(point).transform(points => [...points].sort((a, b) => Date.parse(a.report_at) - Date.parse(b.report_at))),
+  history: z.array(point).refine(points => new Set(points.map(p => p.id)).size === points.length, 'Duplicate history report ids').transform(points => [...points].sort((a, b) => Date.parse(a.report_at) - Date.parse(b.report_at))),
 });
 export type Dataset = z.infer<typeof datasetSchema>;
 export type Measures = z.infer<typeof measuresSchema>;

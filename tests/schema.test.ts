@@ -46,3 +46,14 @@ test('history is returned oldest first even when the feed lists it out of order'
   const parsed = datasetSchema.parse({ ...seed, history: [newer, older] });
   assert.deepEqual(parsed.history.map(p => p.id), ['older', 'newer']);
 });
+
+test('duplicate unit names are rejected because they hide a unit from lookups and links', () => {
+  const [unit] = seed.latest.units;
+  assert.equal(ok(withLatest({ units: [...seed.latest.units, unit] })), false);
+});
+
+test('duplicate history report ids are rejected', () => {
+  const point = seed.history[0];
+  assert.equal(ok({ ...seed, history: [point, { ...point, report_at: '2026-11-02T00:00:00Z' }] }), false);
+  assert.equal(ok({ ...seed, history: [point] }), true);
+});
