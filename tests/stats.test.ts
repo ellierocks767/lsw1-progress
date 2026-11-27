@@ -48,3 +48,33 @@ test('the bundled seed lists code in load-address order, so the code map can say
   assert.ok(addresses.length > 1000);
   assert.ok(addresses.every((a, i) => i === 0 || a > addresses[i - 1]));
 });
+
+test('seed unit rows reconcile with the published totals', () => {
+  const { units, measures } = data.latest;
+  const sum = (pick: (u: (typeof units)[number]) => number) => units.reduce((s, u) => s + pick(u), 0);
+  assert.equal(sum(u => u.measures.total_code), measures.total_code);
+  assert.equal(sum(u => u.measures.matched_code), measures.matched_code);
+  assert.equal(sum(u => u.measures.complete_code), measures.complete_code);
+  assert.equal(sum(u => u.measures.total_functions), measures.total_functions);
+  assert.equal(sum(u => u.measures.matched_functions), measures.matched_functions);
+  assert.equal(sum(u => u.measures.matched_data), measures.matched_data);
+  assert.equal(sum(u => Number(u.complete)), measures.complete_units);
+  // Units without code or data are not listed, so the row count may be lower.
+  assert.ok(units.length <= measures.total_units);
+});
+
+test('each unit lists exactly the functions its measures count', () => {
+  for (const u of data.latest.units) {
+    assert.equal(u.functions.length, u.measures.total_functions, u.name);
+    assert.equal(u.functions.reduce((s, f) => s + f.size, 0) <= u.measures.total_code, true, u.name);
+    assert.equal(u.functions.filter(f => f.similarity >= 100).length, u.measures.matched_functions, u.name);
+  }
+});
+
+test('history ends at the latest report and has one point per revision', () => {
+  const last = data.history.at(-1)!;
+  assert.equal(last.id, data.latest.id);
+  assert.deepEqual(last.measures, data.latest.measures);
+  const revisions = data.history.map(p => p.revision).filter(Boolean);
+  assert.equal(new Set(revisions).size, revisions.length);
+});
