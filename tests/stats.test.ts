@@ -78,3 +78,22 @@ test('history ends at the latest report and has one point per revision', () => {
   const revisions = data.history.map(p => p.revision).filter(Boolean);
   assert.equal(new Set(revisions).size, revisions.length);
 });
+
+test('display helpers format counts, sizes, dates and links predictably', async () => {
+  const { format, kib, date, categoryName, sourceHref } = await import('../lib/stats');
+  assert.equal(format(1234567), '1,234,567');
+  assert.equal(kib(1536), '1.5 KiB');
+  assert.equal(kib(0), '0.0 KiB');
+  assert.equal(date('2026-01-02T03:04:00+02:00'), 'Jan 2, 2026, 1:04 AM UTC');
+  assert.equal(categoryName('sdk'), 'Dolphin SDK');
+  assert.equal(categoryName('custom'), 'custom');
+  const sha = 'a'.repeat(40);
+  assert.equal(sourceHref('auto/a b/test', sha), `https://github.com/ellierocks767/lsw1-decomp/tree/${sha}/src/auto/a%20b/test.c`);
+  // An unrecorded revision falls back to the branch rather than inventing a commit.
+  assert.match(sourceHref('x', null), /\/tree\/main\/src\/x\.c$/);
+});
+
+test('every seed unit category has a readable label', async () => {
+  const { categoryName } = await import('../lib/stats');
+  for (const u of data.latest.units) assert.notEqual(categoryName(u.category), u.category, u.name);
+});
