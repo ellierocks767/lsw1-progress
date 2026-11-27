@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useFeed } from './feed';
-import { categories, categoryName, change, date, format, kib, percent, unitHref } from '@/lib/stats';
+import { categories, categoryName, change, date, format, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
 import type { Dataset } from '@/lib/schema';
 
 export function Bar({ value }: { value: number }) {
@@ -92,7 +92,7 @@ function History({ points }: { points: Dataset['history'] }) {
 
 const shades = [
   { min: 100, label: '100%', color: 'var(--green)' },
-  { min: 90, label: '90–99%', color: 'var(--lime)' },
+  { min: 90, label: '90% to <100%', color: 'var(--lime)' },
   { min: 0.01, label: 'Under 90%', color: 'var(--warning)' },
   { min: 0, label: '0%', color: 'var(--track)' },
 ];
@@ -120,7 +120,7 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
         const x = (start - row * perRow) * scale, w = inRow * scale, span = spans.get(row);
         spans.set(row, [span ? span[0] : x, x + w]);
         rects.push(<rect key={`${i}-${row}`} x={x} y={row * (height + gap)} width={w} height={height} fill={shade(f.similarity)}>
-          <title>{`${u.name} · ${f.name} · ${format(f.size)} B · ${f.similarity.toFixed(1)}%`}</title></rect>);
+          <title>{`${u.name} · ${f.name} · ${format(f.size)} B · ${formatSimilarity(f.similarity)}`}</title></rect>);
         start += inRow; left -= inRow;
       }
       offset += f.size;

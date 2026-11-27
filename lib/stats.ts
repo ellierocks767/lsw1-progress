@@ -2,6 +2,11 @@ import type { Dataset, Measures, Unit } from './schema';
 export const format = (n: number) => n.toLocaleString('en-US');
 export const kib = (n: number) => `${(n / 1024).toFixed(1)} KiB`;
 export const percent = (n: number, total: number) => total ? 100 * n / total : 0;
+export function formatSimilarity(score: number) {
+  const rounded = score.toFixed(2);
+  if (score < 100 && rounded === '100.00') return '<100%';
+  return `${rounded}%`;
+}
 export const date = (s: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(s)) + ' UTC';
 export const categoryName = (name: string) => ({ game: 'Game and Nu2', sdk: 'Dolphin SDK', runtime: 'SN runtime', other: 'Unclassified code' })[name] || name;
 export const unitHref = (name: string) => '/units/' + name.split('/').map(encodeURIComponent).join('/');
