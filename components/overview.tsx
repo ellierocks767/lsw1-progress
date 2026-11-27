@@ -101,7 +101,8 @@ const shade = (similarity: number) => shades.find(s => similarity >= s.min)!.col
 /* Lays functions out in rows of a fixed byte width, in dataset order. The decomp exporter
    (tools/export_progress.py) lists units and functions by load address; the seed matches. */
 function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
-  const [hover, setHover] = useState<Dataset['latest']['units'][number] | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [focused, setFocused] = useState<string | null>(null);
   const rows = 16, width = 1000, height = 22, gap = 6;
   // Build the blocks once per dataset so hovering only redraws the outline and readout.
   const { groups, outlines, dividers } = useMemo(() => {
@@ -132,18 +133,21 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
     const short = u.name.split('/').at(-1)!;
     const labels = [...spans].filter(([, [a, b]]) => b - a >= short.length * 6.4 + 8).map(([row, [a, b]]) =>
       <text key={`label-${row}`} x={(a + b) / 2} y={row * (height + gap) + height / 2}>{short}</text>);
-    return <a key={u.name} href={unitHref(u.name)} aria-label={u.name} onMouseEnter={() => setHover(u)} onFocus={() => setHover(u)}>{rects}{labels}</a>;
+    return <a key={u.name} href={unitHref(u.name)} aria-label={u.name}
+      onMouseEnter={() => setHovered(u.name)} onMouseLeave={() => setHovered(null)}
+      onFocus={() => setFocused(u.name)} onBlur={() => setFocused(null)}>{rects}{labels}</a>;
   });
   return { groups, outlines, dividers };
   }, [units]);
-  const m = hover?.measures;
+  const active = units.find(u => u.name === (focused ?? hovered));
+  const m = active?.measures;
   return <>
     <div className="row section-heading"><h2>Code map</h2>
       <ul className="legend">{shades.map(s => <li key={s.label}><span style={{ background: s.color }} />{s.label}</li>)}</ul></div>
-    <p className="map-readout" aria-live="polite">{hover && m
-      ? <><span className="mono">{hover.name}</span> · {percent(m.matched_code, m.total_code).toFixed(1)}% · {format(m.matched_functions)} / {format(m.total_functions)} functions{hover.complete && <> · <span className="good">complete</span></>}</>
-      : 'Hover a block to see its unit.'}</p>
-    <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="img" aria-label="Functions by objdiff similarity, sized by code bytes" onMouseLeave={() => setHover(null)}>{groups}<g className="map-dividers">{dividers}</g>{hover && <g className="map-outline">{outlines.get(hover.name)}</g>}</svg>
-    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in load-address order. Dark lines separate units, which are labelled where they fit; hover for the rest, click to open one.</p>
+    <p className="map-readout" aria-live="polite">{active && m
+      ? <><span className="mono">{active.name}</span> · {percent(m.matched_code, m.total_code).toFixed(1)}% · {format(m.matched_functions)} / {format(m.total_functions)} functions{active.complete && <> · <span className="good">complete</span></>}</>
+      : 'Hover or focus a unit to see its progress.'}</p>
+    <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="group" aria-label="Functions by objdiff similarity, sized by code bytes">{groups}<g className="map-dividers">{dividers}</g>{active && <g className="map-outline">{outlines.get(active.name)}</g>}</svg>
+    <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in load-address order. Dark lines separate units, which are labelled where they fit.</p>
   </>;
 }
