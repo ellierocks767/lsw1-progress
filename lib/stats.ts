@@ -6,6 +6,8 @@ export const percent = (n: number, total: number) => total ? 100 * n / total : 0
 export function formatPercent(value: number, digits = 1) {
   const rounded = value.toFixed(digits);
   if (value < 100 && Number(rounded) >= 100) return '<100%';
+  // Likewise, real progress must not read as exactly zero.
+  if (value > 0 && Number(rounded) === 0) return `<${(10 ** -digits).toFixed(digits)}%`;
   return `${rounded}%`;
 }
 // Screen-reader value: truncated (not rounded) so incomplete code never reads as 100.
