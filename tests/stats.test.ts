@@ -127,3 +127,11 @@ test('the progress bar value for assistive tech never rounds up to 100', async (
   assert.equal(ariaPercent(0), 0);
   assert.equal(ariaPercent(100), 100);
 });
+
+test('code coverage labels say "No code" instead of 0.0% for units without code', async () => {
+  const { codeCoverage } = await import('../lib/stats');
+  assert.equal(codeCoverage({ matched_code: 0, total_code: 0 }), 'No code');
+  assert.equal(codeCoverage({ matched_code: 0, total_code: 100 }), '0.0%');
+  assert.equal(codeCoverage({ matched_code: 1, total_code: 3 }, 2), '33.33%');
+  assert.equal(codeCoverage({ matched_code: 99999, total_code: 100000 }), '<100%');
+});
