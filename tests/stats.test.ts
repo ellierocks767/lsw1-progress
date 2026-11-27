@@ -97,3 +97,8 @@ test('every seed unit category has a readable label', async () => {
   const { categoryName } = await import('../lib/stats');
   for (const u of data.latest.units) assert.notEqual(categoryName(u.category), u.category, u.name);
 });
+
+test('category labels ignore inherited object properties', async () => {
+  const { categoryName } = await import('../lib/stats');
+  for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) assert.equal(categoryName(name), name);
+});

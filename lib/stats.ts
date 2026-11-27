@@ -8,7 +8,9 @@ export function formatSimilarity(score: number) {
   return `${rounded}%`;
 }
 export const date = (s: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(s)) + ' UTC';
-export const categoryName = (name: string) => ({ game: 'Game and Nu2', sdk: 'Dolphin SDK', runtime: 'SN runtime', other: 'Unclassified code' })[name] || name;
+const categoryNames: Record<string, string> = { game: 'Game and Nu2', sdk: 'Dolphin SDK', runtime: 'SN runtime', other: 'Unclassified code' };
+// Own-property lookup so a category such as "constructor" is not resolved through Object.prototype.
+export const categoryName = (name: string) => Object.hasOwn(categoryNames, name) ? categoryNames[name] : name;
 export const unitHref = (name: string) => '/units/' + name.split('/').map(encodeURIComponent).join('/');
 export const sourceHref = (unit: string, revision: string | null) => `https://github.com/ellierocks767/lsw1-decomp/tree/${revision || 'main'}/src/${unit.split('/').map(encodeURIComponent).join('/')}.c`;
 export function categories(units: Unit[]) {
