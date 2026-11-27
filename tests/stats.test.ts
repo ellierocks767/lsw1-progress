@@ -128,6 +128,14 @@ test('the progress bar value for assistive tech never rounds up to 100', async (
   assert.equal(ariaPercent(100), 100);
 });
 
+test('sweep verdicts missing from the export are not reported as zero', async () => {
+  const { verdictCount } = await import('../lib/stats');
+  assert.equal(verdictCount({ 'COMPILE-ERROR': 1234 }, 'COMPILE-ERROR'), '1,234');
+  assert.equal(verdictCount({ 'COMPILE-ERROR': 0 }, 'COMPILE-ERROR'), '0');
+  assert.equal(verdictCount({}, 'COMPILE-ERROR'), 'Not reported');
+  assert.equal(verdictCount({}, 'constructor'), 'Not reported');
+});
+
 test('code coverage labels say "No code" instead of 0.0% for units without code', async () => {
   const { codeCoverage } = await import('../lib/stats');
   assert.equal(codeCoverage({ matched_code: 0, total_code: 0 }), 'No code');
