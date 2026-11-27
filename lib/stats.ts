@@ -33,16 +33,23 @@ export function categories(units: Unit[]) {
   return [...groups].sort((a, b) => b[1].total - a[1].total);
 }
 // A changed denominator can make percentages move without a matching gain.
-export function delta(history: Dataset['history'], current: Measures) {
-  const prior = history.at(-2);
+// The report before the latest one. History normally ends with the latest report, but a feed may omit it
+// or carry later points, so find it by id rather than assuming it is last.
+export function previousReport(history: Dataset['history'], latestId?: string) {
+  const index = latestId === undefined ? history.length - 1 : history.findIndex(p => p.id === latestId);
+  if (index === -1) return history.at(-1);
+  return history[index - 1];
+}
+export function delta(history: Dataset['history'], current: Measures, latestId?: string) {
+  const prior = previousReport(history, latestId);
   if (!prior || prior.measures.total_code !== current.total_code || prior.measures.total_functions !== current.total_functions) return null;
   return { bytes: current.matched_code - prior.measures.matched_code,
     functions: current.matched_functions - prior.measures.matched_functions, since: prior.report_at };
 }
 // Labels for the "since previous report" card. One report is not a zero gain.
-export function change(history: Dataset['history'], current: Measures) {
-  if (history.length < 2) return { value: 'First report', detail: 'Changes appear after the next build' };
-  const d = delta(history, current);
+export function change(history: Dataset['history'], current: Measures, latestId?: string) {
+  if (!previousReport(history, latestId)) return { value: 'First report', detail: 'Changes appear after the next build' };
+  const d = delta(history, current, latestId);
   if (!d) return { value: 'Not comparable', detail: 'Totals changed since the last report' };
   const sign = (n: number) => (n > 0 ? '+' : '') + format(n);
   return { value: `${sign(d.bytes)} B`, detail: `${sign(d.functions)} functions since ${date(d.since)}` };
