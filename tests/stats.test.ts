@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import seed from '../data/seed.json';
 import { datasetSchema } from '../lib/schema';
-import { categories, change, delta, percent, unitHref } from '../lib/stats';
+import { categories, change, delta, formatSimilarity, percent, unitHref } from '../lib/stats';
 const data = datasetSchema.parse(seed);
 test('seed matches the public schema and category totals reconcile', () => {
   const groups = categories(data.latest.units);
@@ -20,6 +20,12 @@ test('a changed denominator suppresses misleading progress deltas', () => {
 test('zero totals and unit paths are handled safely', () => {
   assert.equal(percent(0,0),0);
   assert.equal(unitHref('auto/a b/test'),'/units/auto/a%20b/test');
+});
+test('rounded objdiff similarity preserves the exact-match threshold', () => {
+  assert.equal(formatSimilarity(0), '0.00%');
+  assert.equal(formatSimilarity(99.9703), '99.97%');
+  assert.equal(formatSimilarity(99.999), '<100%');
+  assert.equal(formatSimilarity(100), '100.00%');
 });
 test('malformed and incompatible feeds are rejected', () => {
   assert.equal(datasetSchema.safeParse({...seed,schema_version:2}).success,false);
