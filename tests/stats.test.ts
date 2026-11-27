@@ -111,3 +111,11 @@ test('rounded percentages never show 100% for incomplete code', async () => {
   assert.equal(formatPercent(100, 1), '100.0%');
   assert.equal(formatPercent(0, 2), '0.00%');
 });
+
+test('the progress bar value for assistive tech never rounds up to 100', async () => {
+  const { ariaPercent } = await import('../lib/stats');
+  assert.equal(ariaPercent(99.996), 99.99);
+  assert.equal(ariaPercent(12.345), 12.34);
+  assert.equal(ariaPercent(0), 0);
+  assert.equal(ariaPercent(100), 100);
+});
