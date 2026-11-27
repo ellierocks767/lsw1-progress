@@ -1,8 +1,17 @@
 'use client';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useFeed } from './feed';
 import { TableScroll } from './table-scroll';
+import {
+  buildCodeMap,
+  CODE_MAP_HEIGHT,
+  CODE_MAP_ROW_HEIGHT,
+  CODE_MAP_SHADES,
+  CODE_MAP_WIDTH,
+  findFunctionAtPoint,
+  type CodeMapUnit,
+} from '@/lib/code-map';
 import { ariaPercent, categories, categoryName, change, codeCoverage, date, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
 import type { Dataset } from '@/lib/schema';
 
@@ -91,64 +100,62 @@ function History({ points }: { points: Dataset['history'] }) {
   </>;
 }
 
-const shades = [
-  { min: 100, label: '100%', color: 'var(--green)' },
-  { min: 90, label: '90% to <100%', color: 'var(--lime)' },
-  { min: 0.01, label: 'Under 90%', color: 'var(--warning)' },
-  { min: 0, label: '0%', color: 'var(--track)' },
-];
-const shade = (similarity: number) => shades.find(s => similarity >= s.min)!.color;
-
 /* Lays functions out in rows of a fixed byte width, in dataset order. The decomp exporter
    (tools/export_progress.py) lists units and functions by load address; the seed matches. */
 function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
-  const [hovered, setHovered] = useState<string | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [hovered, setHovered] = useState<{ unit: string; tooltip: string | null } | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
-  const rows = 16, width = 1000, height = 22, gap = 6;
-  // Build the blocks once per dataset so hovering only redraws the outline and readout.
-  const { groups, outlines, dividers } = useMemo(() => {
-  const total = units.reduce((n, u) => n + u.functions.reduce((a, f) => a + f.size, 0), 0) || 1;
-  const perRow = Math.ceil(total / rows);
-  const scale = width / perRow;
-  let offset = 0;
-  const outlines = new Map<string, React.ReactNode[]>();
-  const dividers: React.ReactNode[] = [];
-  const groups = units.filter(u => u.functions.length).map(u => {
-    const rects: React.ReactNode[] = [], spans = new Map<number, [number, number]>();
-    u.functions.forEach((f, i) => {
-      let start = offset, left = f.size;
-      while (left > 0) {
-        const row = Math.floor(start / perRow), inRow = Math.min(left, (row + 1) * perRow - start);
-        const x = (start - row * perRow) * scale, w = inRow * scale, span = spans.get(row);
-        spans.set(row, [span ? span[0] : x, x + w]);
-        rects.push(<rect key={`${i}-${row}`} x={x} y={row * (height + gap)} width={w} height={height} fill={shade(f.similarity)}>
-          <title>{`${u.name} · ${f.name} · ${format(f.size)} B · ${formatSimilarity(f.similarity)}`}</title></rect>);
-        start += inRow; left -= inRow;
+  const layout = useMemo(() => buildCodeMap(units), [units]);
+  const unitsByName = useMemo(() => new Map(units.map(u => [u.name, u])), [units]);
+  const mapUnitsByName = useMemo(() => new Map(layout.units.map(u => [u.name, u])), [layout]);
+
+  function updateHover(mapUnit: CodeMapUnit, clientX: number, clientY: number) {
+    const unit = unitsByName.get(mapUnit.name);
+    const svg = svgRef.current;
+    let tooltip: string | null = null;
+    if (unit && svg) {
+      const rect = svg.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        const svgX = ((clientX - rect.left) / rect.width) * CODE_MAP_WIDTH;
+        const svgY = ((clientY - rect.top) / rect.height) * CODE_MAP_HEIGHT;
+        const fn = findFunctionAtPoint(unit, mapUnit, layout, svgX, svgY);
+        if (fn) {
+          tooltip = `${unit.name} · ${fn.name} · ${format(fn.size)} B · ${formatSimilarity(fn.similarity)}`;
+        }
       }
-      offset += f.size;
-    });
-    // A gap at the start of each unit separates neighbours of the same colour.
-    for (const [row, [a]] of spans) if (a > 0) dividers.push(<line key={`${u.name}-${row}`} x1={a} x2={a} y1={row * (height + gap)} y2={row * (height + gap) + height} />);
-    // Label the unit wherever its run is wide enough to hold the short name.
-    outlines.set(u.name, [...spans].map(([row, [a, b]]) => <rect key={row} x={a} y={row * (height + gap)} width={b - a} height={height} />));
-    const short = u.name.split('/').at(-1)!;
-    const labels = [...spans].filter(([, [a, b]]) => b - a >= short.length * 6.4 + 8).map(([row, [a, b]]) =>
-      <text key={`label-${row}`} x={(a + b) / 2} y={row * (height + gap) + height / 2}>{short}</text>);
-    return <a key={u.name} href={unitHref(u.name)} aria-label={u.name}
-      onMouseEnter={() => setHovered(u.name)} onMouseLeave={() => setHovered(null)}
-      onFocus={() => setFocused(u.name)} onBlur={() => setFocused(null)}>{rects}{labels}</a>;
-  });
-  return { groups, outlines, dividers };
-  }, [units]);
-  const active = units.find(u => u.name === (focused ?? hovered));
+    }
+    setHovered(prev => (prev?.unit === mapUnit.name && prev.tooltip === tooltip ? prev : { unit: mapUnit.name, tooltip }));
+  }
+
+  const activeName = focused ?? hovered?.unit ?? null;
+  const active = activeName ? unitsByName.get(activeName) : undefined;
+  const activeMapUnit = activeName ? mapUnitsByName.get(activeName) : undefined;
   const m = active?.measures;
+
   return <>
     <div className="row section-heading"><h2>Code map</h2>
-      <ul className="legend">{shades.map(s => <li key={s.label}><span style={{ background: s.color }} />{s.label}</li>)}</ul></div>
+      <ul className="legend">{CODE_MAP_SHADES.map(s => <li key={s.label}><span style={{ background: s.color }} />{s.label}</li>)}</ul></div>
     <p className="map-readout" aria-live="polite">{active && m
       ? <><span className="mono">{active.name}</span> · {codeCoverage(m)} · {format(m.matched_functions)} / {format(m.total_functions)} functions{active.complete && <> · <span className="good">complete</span></>}</>
       : 'Hover or focus a unit to see its progress.'}</p>
-    <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="group" aria-label="Functions by objdiff similarity, sized by code bytes">{groups}<g className="map-dividers">{dividers}</g>{active && <g className="map-outline">{outlines.get(active.name)}</g>}</svg>
+    <svg ref={svgRef} className="code-map" viewBox={`0 0 ${CODE_MAP_WIDTH} ${CODE_MAP_HEIGHT}`} role="group" aria-label="Functions by objdiff similarity, sized by code bytes">
+      {layout.shadePaths.map(path => <path key={path.label} d={path.d} fill={path.color} pointerEvents="none" />)}
+      {layout.dividersPath && <path className="map-dividers" d={layout.dividersPath} />}
+      {layout.units.map(u => <a key={u.name} href={unitHref(u.name)} aria-label={u.name}
+        onMouseEnter={e => updateHover(u, e.clientX, e.clientY)}
+        onMouseMove={e => updateHover(u, e.clientX, e.clientY)}
+        onMouseLeave={() => setHovered(prev => (prev?.unit === u.name ? null : prev))}
+        onFocus={() => setFocused(u.name)}
+        onBlur={() => setFocused(prev => (prev === u.name ? null : prev))}>
+        {hovered?.unit === u.name && hovered.tooltip && <title>{hovered.tooltip}</title>}
+        {u.spans.map(span => <rect key={span.row} x={span.x1} y={span.y} width={span.width} height={CODE_MAP_ROW_HEIGHT} fill="transparent" />)}
+        {u.labels.map(label => <text key={label.row} x={label.x} y={label.y}>{u.short}</text>)}
+      </a>)}
+      {activeMapUnit && <g className="map-outline">
+        {activeMapUnit.spans.map(span => <rect key={span.row} x={span.x1} y={span.y} width={span.width} height={CODE_MAP_ROW_HEIGHT} />)}
+      </g>}
+    </svg>
     <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in load-address order. Dark lines separate units, which are labelled where they fit.</p>
   </>;
 }
