@@ -143,3 +143,12 @@ test('code coverage labels say "No code" instead of 0.0% for units without code'
   assert.equal(codeCoverage({ matched_code: 1, total_code: 3 }, 2), '33.33%');
   assert.equal(codeCoverage({ matched_code: 99999, total_code: 100000 }), '<100%');
 });
+
+test('coverage sort puts units without code after every unit that has code', async () => {
+  const { compareUnits } = await import('../lib/stats');
+  const unit = (name: string, matched_code: number, total_code: number) => ({ ...data.latest.units[0], name, measures: { ...data.latest.units[0].measures, matched_code, total_code } });
+  const rows = [unit('none', 0, 0), unit('zero', 0, 50), unit('half', 5, 10), unit('a-none', 0, 0), unit('most', 9, 10)];
+  assert.deepEqual([...rows].sort((a, b) => compareUnits('coverage', a, b)).map(u => u.name), ['most', 'half', 'zero', 'a-none', 'none']);
+  // Equal values fall back to name so the order is stable.
+  assert.deepEqual([unit('b', 1, 2), unit('a', 1, 2)].sort((a, b) => compareUnits('remaining', a, b)).map(u => u.name), ['a', 'b']);
+});
