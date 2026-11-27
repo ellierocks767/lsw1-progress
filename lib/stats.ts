@@ -2,11 +2,13 @@ import type { Dataset, Measures, Unit } from './schema';
 export const format = (n: number) => n.toLocaleString('en-US');
 export const kib = (n: number) => `${(n / 1024).toFixed(1)} KiB`;
 export const percent = (n: number, total: number) => total ? 100 * n / total : 0;
-export function formatSimilarity(score: number) {
-  const rounded = score.toFixed(2);
-  if (score < 100 && rounded === '100.00') return '<100%';
+// Rounding must not claim 100% for something that is not complete.
+export function formatPercent(value: number, digits = 1) {
+  const rounded = value.toFixed(digits);
+  if (value < 100 && Number(rounded) >= 100) return '<100%';
   return `${rounded}%`;
 }
+export const formatSimilarity = (score: number) => formatPercent(score, 2);
 export const date = (s: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(s)) + ' UTC';
 const categoryNames: Record<string, string> = { game: 'Game and Nu2', sdk: 'Dolphin SDK', runtime: 'SN runtime', other: 'Unclassified code' };
 // Own-property lookup so a category such as "constructor" is not resolved through Object.prototype.

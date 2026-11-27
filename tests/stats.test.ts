@@ -102,3 +102,12 @@ test('category labels ignore inherited object properties', async () => {
   const { categoryName } = await import('../lib/stats');
   for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) assert.equal(categoryName(name), name);
 });
+
+test('rounded percentages never show 100% for incomplete code', async () => {
+  const { formatPercent } = await import('../lib/stats');
+  assert.equal(formatPercent(99.96, 1), '<100%');
+  assert.equal(formatPercent(99.996, 2), '<100%');
+  assert.equal(formatPercent(99.94, 1), '99.9%');
+  assert.equal(formatPercent(100, 1), '100.0%');
+  assert.equal(formatPercent(0, 2), '0.00%');
+});

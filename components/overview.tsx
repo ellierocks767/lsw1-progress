@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useFeed } from './feed';
-import { categories, categoryName, change, date, format, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
+import { categories, categoryName, change, date, format, formatPercent, formatSimilarity, kib, percent, unitHref } from '@/lib/stats';
 import type { Dataset } from '@/lib/schema';
 
 export function Bar({ value }: { value: number }) {
@@ -11,7 +11,7 @@ export function Bar({ value }: { value: number }) {
 
 function Meter({ label, value, detail, href }: { label: string; value: number; detail?: string; href?: string }) {
   return <div className="meter">
-    <div className="row">{href ? <Link className="mono" href={href}>{label}</Link> : <span>{label}</span>}<span className="figure">{value.toFixed(1)}%</span></div>
+    <div className="row">{href ? <Link className="mono" href={href}>{label}</Link> : <span>{label}</span>}<span className="figure">{formatPercent(value,1)}</span></div>
     <Bar value={value} />
     {detail && <p className="detail">{detail}</p>}
   </div>;
@@ -34,7 +34,7 @@ export function Overview() {
     <div className="page-heading"><div><h1>Matching progress</h1><p>Objdiff results for the GameCube build of LEGO Star Wars: The Video Game (GL5E4F).</p></div></div>
     <section className="panel hero">
       <div className="stats">{[
-        ['Code matched', `${code.toFixed(2)}%`, `${kib(m.matched_code)} of ${kib(m.total_code)}`],
+        ['Code matched', formatPercent(code,2), `${kib(m.matched_code)} of ${kib(m.total_code)}`],
         ['Functions matched', `${format(m.matched_functions)} / ${format(m.total_functions)}`, 'Fully matching / total'],
         ['Code remaining', kib(m.total_code - m.matched_code), `Across ${format(m.total_functions - m.matched_functions)} unmatched functions`],
         ['Since previous report', since.value, since.detail],
@@ -81,11 +81,11 @@ function History({ points }: { points: Dataset['history'] }) {
     <svg className="history-chart" viewBox="0 0 720 220" role="img" aria-label="Matched code percentage by report date">
       {[0, 50, 100].map(v => <g key={v}><line x1="40" x2="680" y1={190 - v * 1.6} y2={190 - v * 1.6} stroke="var(--border)" /><text x="0" y={194 - v * 1.6} fill="var(--muted)" fontSize="13">{v}%</text></g>)}
       <path d={path} fill="none" stroke="var(--accent)" strokeWidth="3" />
-      {points.map((p, i) => <circle key={p.id} cx={x(i)} cy={y(i)} r="4" fill="var(--accent)"><title>{date(p.report_at)}: {percent(p.measures.matched_code, p.measures.total_code).toFixed(2)}%</title></circle>)}
+      {points.map((p, i) => <circle key={p.id} cx={x(i)} cy={y(i)} r="4" fill="var(--accent)"><title>{date(p.report_at)}: {formatPercent(percent(p.measures.matched_code, p.measures.total_code),2)}</title></circle>)}
     </svg>
     <div className="row detail"><span>{date(points[0].report_at)}</span><span>{date(points.at(-1)!.report_at)}</span></div>
     <details><summary>{format(points.length)} reports</summary><div className="table-scroll"><table><thead><tr><th>Report</th><th className="num">Code matched</th><th className="num">Functions</th></tr></thead><tbody>
-      {[...points].reverse().map(p => <tr key={p.id}><td>{date(p.report_at)}</td><td className="num">{kib(p.measures.matched_code)} ({percent(p.measures.matched_code, p.measures.total_code).toFixed(2)}%)</td><td className="num">{format(p.measures.matched_functions)}</td></tr>)}
+      {[...points].reverse().map(p => <tr key={p.id}><td>{date(p.report_at)}</td><td className="num">{kib(p.measures.matched_code)} ({formatPercent(percent(p.measures.matched_code, p.measures.total_code),2)})</td><td className="num">{format(p.measures.matched_functions)}</td></tr>)}
     </tbody></table></div></details>
   </>;
 }
@@ -145,7 +145,7 @@ function CodeMap({ units }: { units: Dataset['latest']['units'] }) {
     <div className="row section-heading"><h2>Code map</h2>
       <ul className="legend">{shades.map(s => <li key={s.label}><span style={{ background: s.color }} />{s.label}</li>)}</ul></div>
     <p className="map-readout" aria-live="polite">{active && m
-      ? <><span className="mono">{active.name}</span> · {percent(m.matched_code, m.total_code).toFixed(1)}% · {format(m.matched_functions)} / {format(m.total_functions)} functions{active.complete && <> · <span className="good">complete</span></>}</>
+      ? <><span className="mono">{active.name}</span> · {formatPercent(percent(m.matched_code, m.total_code),1)} · {format(m.matched_functions)} / {format(m.total_functions)} functions{active.complete && <> · <span className="good">complete</span></>}</>
       : 'Hover or focus a unit to see its progress.'}</p>
     <svg className="code-map" viewBox={`0 0 ${width} ${rows * (height + gap) - gap}`} role="group" aria-label="Functions by objdiff similarity, sized by code bytes">{groups}<g className="map-dividers">{dividers}</g>{active && <g className="map-outline">{outlines.get(active.name)}</g>}</svg>
     <p className="detail">Each block is a function, sized by its code bytes and coloured by objdiff similarity, in load-address order. Dark lines separate units, which are labelled where they fit.</p>
