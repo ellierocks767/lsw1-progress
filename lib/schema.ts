@@ -21,7 +21,7 @@ const datasetShape = z.object({
     candidates: z.object({ sweep_at: stamp.nullable(), verdicts: z.record(z.string(), count), rows: z.array(candidate) }).nullable(),
   }),
   // Charts, the reports table and the previous-report comparison all assume oldest first.
-  history: z.array(point).transform(points => [...points].sort((a, b) => Date.parse(a.report_at) - Date.parse(b.report_at))),
+  history: z.array(point).refine(points => new Set(points.map(p => p.id)).size === points.length, 'Duplicate history report ids').transform(points => [...points].sort((a, b) => Date.parse(a.report_at) - Date.parse(b.report_at))),
 });
 // The dashboard shows unit rows and headline totals side by side, so a feed whose parts disagree is
 // rejected (and the bundled snapshot shown) rather than displayed with contradictory figures.

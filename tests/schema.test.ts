@@ -57,3 +57,14 @@ test('feeds whose unit rows contradict the headline totals are rejected', () => 
   assert.equal(ok(withLatest({ units: [{ ...unit, functions: unit.functions.slice(1) }, ...rest] })), false, 'function list shortened');
   assert.equal(ok(withLatest({ units: [{ ...unit, complete: !unit.complete }, ...rest] })), false, 'complete flag flipped');
 });
+
+test('duplicate unit names are rejected even when the headline totals agree', () => {
+  const [first, second, ...rest] = seed.latest.units;
+  assert.equal(ok(withLatest({ units: [first, { ...second, name: first.name }, ...rest] })), false);
+});
+
+test('duplicate history report ids are rejected', () => {
+  const point = seed.history[0];
+  assert.equal(ok({ ...seed, history: [point, { ...point, report_at: '2026-11-02T00:00:00Z' }] }), false);
+  assert.equal(ok({ ...seed, history: [point] }), true);
+});
