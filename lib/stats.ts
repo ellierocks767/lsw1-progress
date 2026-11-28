@@ -71,3 +71,9 @@ export function compareUnits(sort: UnitSort | string, a: Unit, b: Unit) {
   }
   return (bm.total_code - bm.matched_code) - (am.total_code - am.matched_code) || byName;
 }
+// The candidates page says rows are ranked by size × similarity, so enforce that order here rather than
+// trusting the feed. Ties fall back to unit and function name so the order is deterministic.
+export type Candidate = NonNullable<Dataset['latest']['candidates']>['rows'][number];
+export function compareCandidates(a: Candidate, b: Candidate) {
+  return b.size * b.similarity - a.size * a.similarity || a.unit.localeCompare(b.unit) || a.name.localeCompare(b.name);
+}

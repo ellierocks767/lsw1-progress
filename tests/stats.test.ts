@@ -169,3 +169,10 @@ test('the previous report is found relative to the latest report, not the end of
   // Without an id the old behaviour (latest is last) holds.
   assert.equal(previousReport([older, point])?.id, 'older');
 });
+
+test('candidates rank by size × similarity regardless of feed order, with deterministic ties', async () => {
+  const { compareCandidates } = await import('../lib/stats');
+  const r = (name: string, unit: string, size: number, similarity: number) => ({ name, unit, size, similarity });
+  const rows = [r('small', 'a', 100, 99), r('big', 'b', 1000, 50), r('tieB', 'b', 10, 10), r('tieA', 'a', 10, 10), r('top', 'c', 1000, 90)];
+  assert.deepEqual([...rows].sort(compareCandidates).map(x => x.name), ['top', 'big', 'small', 'tieA', 'tieB']);
+});
