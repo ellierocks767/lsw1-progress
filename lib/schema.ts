@@ -32,6 +32,7 @@ export const datasetSchema = datasetShape.superRefine(({ latest }, ctx) => {
   for (const u of latest.units) {
     if (names.has(u.name)) fail(`Duplicate unit ${u.name}`);
     names.add(u.name);
+    if (new Set(u.functions.map(f => f.name)).size !== u.functions.length) fail(`${u.name}: duplicate function names`);
     const m = u.measures;
     if (u.functions.length !== m.total_functions) fail(`${u.name}: function list disagrees with total_functions`);
     if (u.functions.filter(f => f.similarity >= 100).length !== m.matched_functions) fail(`${u.name}: matched functions disagree with similarity`);
@@ -40,6 +41,13 @@ export const datasetSchema = datasetShape.superRefine(({ latest }, ctx) => {
     sum.complete_units += Number(u.complete);
   }
   for (const k of Object.keys(sum) as (keyof typeof sum)[]) if (sum[k] !== latest.measures[k]) fail(`Unit rows do not add up to ${k}`);
+  // A repeated candidate would be counted twice in the near-miss and draft totals.
+  const seen = new Set<string>();
+  for (const r of latest.candidates?.rows ?? []) {
+    const key = JSON.stringify([r.unit, r.name]);
+    if (seen.has(key)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Duplicate candidate ${r.unit} ${r.name}`, path: ['latest', 'candidates', 'rows'] });
+    seen.add(key);
+  }
   if (latest.units.length > latest.measures.total_units) fail('More unit rows than total_units');
 });
 export type Dataset = z.infer<typeof datasetSchema>;

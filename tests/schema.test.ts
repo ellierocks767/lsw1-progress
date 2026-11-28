@@ -68,3 +68,14 @@ test('duplicate history report ids are rejected', () => {
   assert.equal(ok({ ...seed, history: [point, { ...point, report_at: '2026-11-02T00:00:00Z' }] }), false);
   assert.equal(ok({ ...seed, history: [point] }), true);
 });
+
+test('duplicate candidate rows and duplicate function names within a unit are rejected', () => {
+  const c = seed.latest.candidates!;
+  assert.equal(ok(withLatest({ candidates: { ...c, rows: [c.rows[0], ...c.rows] } })), false, 'duplicate candidate');
+  assert.equal(ok(withLatest({ candidates: { ...c, rows: [{ ...c.rows[0], unit: 'other/unit' }, ...c.rows] } })), true, 'same name in another unit');
+  const idx = seed.latest.units.findIndex(u => u.functions.length > 0);
+  const unit = seed.latest.units[idx];
+  const dup = { ...unit, functions: [...unit.functions, unit.functions[0]], measures: { ...unit.measures, total_functions: unit.measures.total_functions + 1, matched_functions: unit.measures.matched_functions + Number(unit.functions[0].similarity >= 100) } };
+  const units = seed.latest.units.map((u, i) => i === idx ? dup : u);
+  assert.equal(ok(withLatest({ units })), false, 'duplicate function name');
+});
